@@ -11,3 +11,4 @@ Projeto pessoal criado para praticar HTML, TailwindCSS e JavaScript manipulando 
 ## Como rodar
 
 - Abra o index.html no navegador
+- Ou entrar pelo link https://gumoro.github.io/Dashboard-Financeiro/
