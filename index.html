@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Financeiro</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white p-4">
+  <div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-4 text-center">💰 Dashboard Financeiro</h1>
+
+    <form id="form-transacao" class="mb-4 flex flex-col gap-2">
+      <input type="text" id="descricao" placeholder="Descrição" class="p-2 border border-gray-700 bg-gray-800 rounded">
+      <input type="number" id="valor" placeholder="Valor (positivo ou negativo)" class="p-2 border border-gray-700 bg-gray-800 rounded">
+      <input type="text" id="categoria" placeholder="Categoria" class="p-2 border border-gray-700 bg-gray-800 rounded">
+      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">Adicionar Transação</button>
+    </form>
+
+    <div id="saldo" class="text-xl font-semibold mb-4 text-center">Saldo Atual: R$ 0,00</div>
+
+    <canvas id="grafico"></canvas>
+
+    <ul id="lista-transacoes" class="mt-4 space-y-2"></ul>
+  </div>
+
+  <script>
+    const form = document.getElementById('form-transacao');
+    const lista = document.getElementById('lista-transacoes');
+    const saldoEl = document.getElementById('saldo');
+    const ctx = document.getElementById('grafico').getContext('2d');
+
+    let transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
+    let grafico = null;
+
+    function atualizarDashboard() {
+      lista.innerHTML = '';
+      let saldo = 0;
+      const categorias = {};
+
+      transacoes.forEach(t => {
+        saldo += t.valor;
+        if (!categorias[t.categoria]) categorias[t.categoria] = 0;
+        categorias[t.categoria] += t.valor;
+
+        const li = document.createElement('li');
+        li.className = 'bg-gray-800 p-2 rounded flex justify-between';
+        li.innerHTML = `<span>${t.descricao} (${t.categoria})</span><span class="${t.valor < 0 ? 'text-red-400' : 'text-green-400'}">R$ ${t.valor.toFixed(2)}</span>`;
+        lista.appendChild(li);
+      });
+
+      saldoEl.textContent = `Saldo Atual: R$ ${saldo.toFixed(2)}`;
+
+      if (grafico) grafico.destroy();
+      grafico = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(categorias),
+          datasets: [{
+            label: 'Gastos por categoria',
+            data: Object.values(categorias),
+            backgroundColor: ['#f87171', '#34d399', '#60a5fa', '#fbbf24', '#a78bfa', '#f472b6']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#fff' }
+            }
+          }
+        }
+      });
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const descricao = document.getElementById('descricao').value;
+      const valor = parseFloat(document.getElementById('valor').value);
+      const categoria = document.getElementById('categoria').value;
+
+      if (!descricao || isNaN(valor) || !categoria) return;
+
+      transacoes.push({ descricao, valor, categoria });
+      localStorage.setItem('transacoes', JSON.stringify(transacoes));
+      form.reset();
+      atualizarDashboard();
+    });
+
+    atualizarDashboard();
+  </script>
+</body>
+</html>
